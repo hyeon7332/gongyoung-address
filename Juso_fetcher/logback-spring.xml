@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration>
+<configuration>
+
+    <!-- 로컬 환경 설정 -->
+    <springProfile name="local">
+        <property name="LOG_PATH" value="logs/local/" />
+    </springProfile>
+
+    <!-- 운영(prod) 환경 설정 -->
+    <springProfile name="prod">
+        <property name="LOG_PATH" value="/app/juso_fetcher/logs/" />
+    </springProfile>
+
+    <!-- 콘솔 로그 출력 -->
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 파일 로그 출력 -->
+    <appender name="DownloadFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/juso-fetcher.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/juso-fetcher-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- UpdateClient 로그 별도 파일 기록 -->
+    <logger name="com.jusoFetcher.UpdateClient" level="INFO" additivity="false">
+        <appender-ref ref="Console"/>
+        <appender-ref ref="DownloadFileAppender"/>
+    </logger>
+
+    <!-- UpdateScheduler 로그 별도 파일 기록 -->
+    <logger name="com.jusoFetcher.UpdateScheduler" level="INFO" additivity="false">
+        <appender-ref ref="Console"/>
+        <appender-ref ref="DownloadFileAppender"/>
+    </logger>
+
+    <!-- 기본 로그 설정 -->
+    <root level="INFO">
+        <appender-ref ref="Console"/>
+    </root>
+
+</configuration>

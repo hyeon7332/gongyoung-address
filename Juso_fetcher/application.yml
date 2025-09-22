@@ -1,0 +1,12 @@
+spring:
+  datasource:
+  	hikari:
+      maximum-pool-size: 10		# 커넥션 풀의 최대 연결 수
+      minimum-idle: 2			    # 최소 유휴 커넥션 수 (미리 열어둘 수)
+      idle-timeout: 30000		  # 유휴 커넥션이 반납되지 않고 유지되는 시간 (ms, 30초)
+
+  profiles:
+    active: prod  # 기본 실행 프로파일 (local or prod)
+
+logging:
+  config: classpath:logback-spring.xml  # 로그 설정 파일 경로

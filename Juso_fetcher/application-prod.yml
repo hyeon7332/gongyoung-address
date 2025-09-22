@@ -1,0 +1,5 @@
+download-path: /app/jusonas/juso-download  # 다운로드 위치
+
+# 커스텀 스케줄 설정 (cron 형식: 초 분 시 일 월 요일 ?)
+schedule:
+  cron: "0 40 07 * * ?"  # 매일 오전 7시 40분에 실행
