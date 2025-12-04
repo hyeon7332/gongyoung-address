@@ -31,7 +31,6 @@ public class AddressBatchQuartzJob implements Job {
 
     private final ZipExtractor zipExtractor;
     private final AddressChangeFileReader fileReader;
-    private final AddressDongDetailFileReader dongFileReader;
     private final AddressChangeWriter writer;
     private final AddressChangeProperties properties;
 
@@ -41,44 +40,40 @@ public class AddressBatchQuartzJob implements Job {
      * @param context Quartz JobExecutionContext
      * @throws JobExecutionException 실행 중 예외 발생 시
      */
-    @Override
-    public void execute(JobExecutionContext context) throws JobExecutionException {
-        log.info("주소 일배치 시작");
-
-        try {
-            String zipRootDir = properties.getPath().getZipDir();
-            String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyMMdd"));
-
-            String zipDir = zipRootDir + "/" + today;
-            String extractDir = properties.getPath().getExtractDir();
-
-            // 도로명주소한글 (JUSUKR.*) 처리
-            try {
-                log.info("[1/2] JUSUKR(도로명주소한글) 처리 시작");
-                File krFile = zipExtractor.extractTextFiles(zipDir, extractDir, "JUSUKR", "_mst.txt");
-                List<AddressChangeRow> krRows = fileReader.read(krFile);
-                writer.write(krRows); 
-                log.info("[1/2] JUSUKR 처리 완료 - 총 {}건", krRows.size());
-            } catch (Exception e) {
-                log.error("[1/2] JUSUKR 처리 중 예외 (다음 단계 계속 진행): {}", e.getMessage(), e);
-            }
-
-            // 상세주소동표시 (JUSDG.*) 처리
-            try {
-                log.info("[2/2] JUSDG(상세주소동표시) 처리 시작");
-                File dgFile = zipExtractor.extractTextFiles(zipDir, extractDir, "JUSDG");
-                List<AddressDongDetailRow> dgRows = dongFileReader.read(dgFile); 
-                writer.write(dgRows);
-                log.info("[2/2] JUSDG 처리 완료 - 총 {}건", dgRows.size());
-            } catch (Exception e) {
-                log.error("[2/2] JUSDG 처리 중 예외: {}", e.getMessage(), e);
-            }
-
-            log.info("주소 일배치 전체 완료");
-
-        } catch (Exception e) {
-            log.error("주소 일배치 중 예외 발생", e);
-            throw new JobExecutionException(e);
-        }
+    @Override 
+    public void execute(JobExecutionContext context) throws JobExecutionException { 
+        log.info("주소 일배치 시작"); 
+        
+        try { 
+            String zipRootDir = properties.getPath().getZipDir(); 
+            String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyMMdd")); 
+            String zipDir = zipRootDir + "/" + today; 
+            String extractDir = properties.getPath().getExtractDir(); 
+            
+            // 1) 도로명주소한글 (JUSUKR → *_mst.txt) 
+            try { 
+                log.info("[1/2] JUSUKR 처리 시작"); 
+                File krFile = zipExtractor.extractTextFile(zipDir, extractDir, "JUSUKR", "_mst.txt"); 
+                List<AddressChangeRow> krRows = fileReader.read(krFile); 
+                writer.write(krRows, DatasetType.ROAD_KR); 
+                log.info("[1/2] JUSUKR 처리 완료 - {}건", krRows.size()); 
+            } catch (Exception e) { 
+                log.error("[1/2] JUSUKR 처리 중 예외(다음 단계 계속): {}", e.getMessage(), e); 
+            } 
+            
+            // 2) 상세주소동표시 (JUSDG → *_dong.txt) 
+            try { 
+                log.info("[2/2] JUSDG 처리 시작"); 
+                File dgFile = zipExtractor.extractTextFile(zipDir, extractDir, "JUSDG", "_dong.txt"); 
+                List<AddressChangeRow> dgRows = fileReader.read(dgFile); 
+                writer.write(dgRows, DatasetType.DONG_DETAIL); 
+                log.info("[2/2] JUSDG 처리 완료 - {}건", dgRows.size()); 
+            } catch (Exception e) { 
+                log.error("[2/2] JUSDG 처리 중 예외: {}", e.getMessage(), e); 
+            } log.info("주소 일배치 완료");
+            
+        } catch (Exception e) { 
+            log.error("주소 일배치 최상위 예외", e); throw new JobExecutionException(e); 
+        } 
     }
 }
